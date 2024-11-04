@@ -8,20 +8,6 @@ import NIO
 import Foundation
 
 
-enum FTPResponseCode: Int {
-    case welcome = 220
-    case loggedIn = 230
-    case passwordRequired = 331
-    case enteringPassiveMode = 227
-    case fileStatusOK = 150
-    case closingDataConnection = 226
-    case commandOK = 200
-    
-    var isPositive: Bool {
-        return (200...399).contains(rawValue)
-    }
-}
-
 struct ConnectionInformation {
     var isConnected: Bool?
     var ipAddress: String?
@@ -59,7 +45,6 @@ protocol NetworkModelDelegate: AnyObject {
     func networkDidReceiveData(_ data: String)
     func networkDidConnectDataChannel()
     func networkDidDisconnectDataChannel()
-    
     func getResponseCode(_ response: String) -> Int?
     func getResponseMessage(_ response: String) -> String?
     func setCurrentResponse(code: Int, message: String)

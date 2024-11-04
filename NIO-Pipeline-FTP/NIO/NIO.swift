@@ -10,25 +10,13 @@ class ChannelReadHandler: ChannelInboundHandler {
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         var buffer = unwrapInboundIn(data)
         
-        guard let response = buffer.readString(length: buffer.readableBytes) else {
+        guard buffer.readString(length: buffer.readableBytes) != nil else {
             print("Error reading from buffer")
             return
         }
         context.fireChannelRead(data)
     }
 }
-
-
-class ChannelSendHandler: ChannelOutboundHandler {
-    typealias OutboundIn = ByteBuffer
-    typealias OutboundOut = ByteBuffer
-    
-    func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
-        let buffer = unwrapOutboundIn(data)
-        context.write(wrapOutboundOut(buffer), promise: promise)
-    }
-}
-
 
 class LineBufferHandler: ChannelInboundHandler {
     typealias InboundIn = ByteBuffer
@@ -56,8 +44,9 @@ class LineBufferHandler: ChannelInboundHandler {
             
             networkModel?.delegate?.setCurrentResponse(code: code, message: message)
             
+            // always list
             if(code == 150 || code == 227) {
-                if let passivePort = passiveModePort(message) {
+                if passiveModePort(message) != nil {
                     networkModel?.dataChannelCreate(port: passiveModePort(message) ?? 22)
                     networkModel?.sendCommand("LIST\r\n")
                 }
@@ -113,5 +102,15 @@ class DataChannelHandler: ChannelInboundHandler {
     
     func channelInactive(context: ChannelHandlerContext) {
         networkModel?.delegate?.networkDidDisconnectDataChannel()
+    }
+}
+
+class ChannelSendHandler: ChannelOutboundHandler {
+    typealias OutboundIn = ByteBuffer
+    typealias OutboundOut = ByteBuffer
+    
+    func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
+        let buffer = unwrapOutboundIn(data)
+        context.write(wrapOutboundOut(buffer), promise: promise)
     }
 }

@@ -9,44 +9,10 @@ import Foundation
 
 @Observable
 class FTPConnectionViewModel: NetworkModelDelegate {
-
     
-    
-    var pendingUsername: String = ""
-    var pendingPassword: String = ""
-    var isConnected = false
-    var isLoggedIn = false
-    var currentDirectory: [String] = []
-    var isDataChannelConnected = false
-    var currentDirectoryData: String = ""
-    var lastError: String?
-    var currentItems: [FTPListItem] = []
-    var currentConnectionState: CurrentState = .disconnected
-    var currentFTPState: CurrentState.FTPState = .idle
-    var isDownloadComplete: Bool = false
-    
-    private let network: NetworkModel
-
-    var currentResponseMessage: String? {
-            didSet {
-                if let message = currentResponseMessage {
-                    print("New response: \(message)")
-                }
-            }
-        }
-    
-    var currentResponseCode: Int? {
-       didSet {
-           if let code = currentResponseCode {
-               print("New Code: \(code)")
-               updateStateFromResponse(code)
-               stateManager()
-           }
-       }
-    }
+    // Types, variables, etc.
     
     enum CurrentState {
-        
         case connected(FTPState)
         case disconnected
         
@@ -62,59 +28,137 @@ class FTPConnectionViewModel: NetworkModelDelegate {
         }
     }
     
-    private func updateStateFromResponse(_ code: Int) {
-       switch code {
-       case FTPResponseCode.welcome.rawValue:  // 220
-           currentConnectionState = .connected(.welcome)
-       case FTPResponseCode.passwordRequired.rawValue:  // 331
-           currentConnectionState = .connected(.waitingForPassword)
-       case FTPResponseCode.loggedIn.rawValue:  // 230
-           currentConnectionState = .connected(.loggedIn)
-       case FTPResponseCode.enteringPassiveMode.rawValue: // 227
-           currentConnectionState = .connected(.passiveMode)
-       case FTPResponseCode.fileStatusOK.rawValue: // 150
-           currentConnectionState = .connected(.dataTransferReady)
-       case FTPResponseCode.closingDataConnection.rawValue: // 226
-           currentConnectionState = .connected(.dataTransferComplete)
-       default:
-           break
-       }
+    struct ConnectionState {
+        var currentState: CurrentState = .disconnected
+        var responseCode: Int?
+        var responseMessage: String?
+        var lastError: String?
     }
-
+    
+    struct FileSystemState {
+        var currentDirectory: [String] = []
+        var currentItems: [FTPListItem] = []
+        var currentDirectoryData: String = ""
+    }
+    
+    struct TransferState {
+        var isDataChannelConnected = false
+    }
+    
+    struct Credentials {
+        var username: String = ""
+        var password: String = ""
+    }
+        
+    private let network: NetworkModel
+    private var connectionState: ConnectionState = ConnectionState()
+    private var fileSystemState: FileSystemState = FileSystemState()
+    private var transferState: TransferState = TransferState()
+    private var credentials: Credentials = Credentials()
+        
+    var currentResponseMessage: String? {
+        get { connectionState.responseMessage }
+        set {
+            connectionState.responseMessage = newValue
+            if let message = newValue {
+                print("New response: \(message)")
+            }
+        }
+    }
+    
+    var currentResponseCode: Int? {
+        get { connectionState.responseCode }
+        set {
+            connectionState.responseCode = newValue
+            if let code = newValue {
+                print("New Code: \(code)")
+                updateStateFromResponse(code)
+                stateManager()
+            }
+        }
+    }
+    
+    var isConnected: Bool {
+        if case .connected = connectionState.currentState {
+            return true
+        }
+        return false
+    }
+    
+    var isLoggedIn: Bool {
+        if case .connected(let ftpState) = connectionState.currentState {
+            return ftpState == .loggedIn
+        }
+        return false
+    }
+    
+    var currentItems: [FTPListItem] {
+        get { fileSystemState.currentItems }
+        set { fileSystemState.currentItems = newValue }
+    }
+    
+    // State manager
+    
+    private func updateStateFromResponse(_ code: Int) {
+        let newState: CurrentState = switch code {
+        case 220: .connected(.welcome)
+        case 331: .connected(.waitingForPassword)
+        case 230: .connected(.loggedIn)
+        case 227: .connected(.passiveMode)
+        case 150: .connected(.dataTransferReady)
+        case 226: .connected(.dataTransferComplete)
+        default: connectionState.currentState
+        }
+        connectionState.currentState = newState
+    }
+    
     private func stateManager() {
-       switch currentConnectionState {
-       case .disconnected:
-           print("Disconnected")
-           
-       case .connected(let ftpState):
-           switch ftpState {
-           case .idle:
-               break
-           case .welcome:
-               sendFTPCommand("USER \(pendingUsername)\r\n")
-               networkDidConnect()
-           case .waitingForPassword:
-            sendFTPCommand("PASS \(pendingPassword)\r\n")
-           case .loggedIn:
-               sendFTPCommand("PASV\r\n")
-               networkDidLogin()
-           case .passiveMode:
-               break
-           case .dataTransferReady:
-               break
-           case .dataTransferInProgress:
-               break
-           case .dataTransferComplete:
-               isDownloadComplete = true
-               break
-           
-           }
-       }
+        switch connectionState.currentState {
+        case .disconnected:
+            print("Disconnected")
+            
+        case .connected(let ftpState):
+            switch ftpState {
+            case .idle: break
+            case .welcome:
+                sendFTPCommand("USER \(credentials.username)\r\n")
+                networkDidConnect()
+            case .waitingForPassword:
+                sendFTPCommand("PASS \(credentials.password)\r\n")
+            case .loggedIn:
+                sendFTPCommand("PASV\r\n")
+                networkDidLogin()
+            case .passiveMode, .dataTransferReady,
+                    .dataTransferInProgress, .dataTransferComplete:
+                break
+            }
+        }
+    }
+    
+    // Helper functions for UI
+    
+    func login(username: String, password: String) {
+        credentials.username = username
+        credentials.password = password
+        connectionState.currentState = .connected(.idle)
+    }
+    
+    func connect(host: String, port: Int) {
+        network.controlChannelCreate(connectionInfo: ConnectionInformation(
+            isConnected: nil,
+            ipAddress: host,
+            port: port
+        ))
+    }
+    
+    func disconnect() {
+        network.disconnect()
+        connectionState.currentState = .disconnected
     }
     
     func sendFTPCommand(_ command: String) {
-            network.sendCommand(command)
-        }
+        network.sendCommand(command)
+    }
     
     func changeDirectory(_ path: String) {
         network.sendCommand("CWD \(path)\r\n")
@@ -125,22 +169,10 @@ class FTPConnectionViewModel: NetworkModelDelegate {
         network.sendCommand("LIST\r\n")
     }
     
-    func login(username: String, password: String) {
-        
-        self.pendingUsername = username
-        self.pendingPassword = password
-        currentConnectionState = .connected(.idle)
-    }
-    
-    
-    func disconnect() {
-        network.disconnect()
-        isLoggedIn = false
-        isConnected = false
-    }
+    // Parsers
     
     private func parseListResponse(_ data: String) -> [FTPListItem] {
-        return data.components(separatedBy: "\n")
+        data.components(separatedBy: "\n")
             .filter { !$0.isEmpty }
             .compactMap { line -> FTPListItem? in
                 let isDirectory = line.hasPrefix("d")
@@ -157,77 +189,65 @@ class FTPConnectionViewModel: NetworkModelDelegate {
     }
     
     private func parseResponse(_ response: String) -> (code: Int, message: String)? {
-            guard response.count >= 3,
-                  let code = Int(response.prefix(3)) else {
-                return nil
-            }
-            let message = String(response.dropFirst(4))
-            return (code, message)
+        guard response.count >= 3,
+              let code = Int(response.prefix(3)) else {
+            return nil
         }
+        let message = String(response.dropFirst(4))
+        return (code, message)
+    }
     
+    // NetworkModelDelegate functions
     
-    
-    
-    
-    // delegate methods
     func networkDidConnect() {
-        isConnected = true
+        connectionState.currentState = .connected(.idle)
     }
     
     func networkDidDisconnect() {
-        isConnected = false
-        isLoggedIn = false
+        connectionState.currentState = .disconnected
     }
     
     func networkDidLogin() {
-        isLoggedIn = true
+        connectionState.currentState = .connected(.loggedIn)
     }
     
     func networkDidReceiveError(_ error: String) {
-        lastError = error
+        connectionState.lastError = error
     }
     
     func networkDidReceiveDirectoryListing(_ items: [String]) {
-        currentDirectory = items
+        fileSystemState.currentDirectory = items
     }
     
     func networkDidConnectDataChannel() {
-            isDataChannelConnected = true
-        }
+        transferState.isDataChannelConnected = true
+    }
     
     func networkDidDisconnectDataChannel() {
-        isDataChannelConnected = false
+        transferState.isDataChannelConnected = false
     }
-    
     
     func networkDidReceiveData(_ data: String) {
-        currentItems = parseListResponse(data)
-        }
+        fileSystemState.currentItems = parseListResponse(data)
+    }
     
     func getResponseCode(_ response: String) -> Int? {
-        return parseResponse(response)?.code
+        parseResponse(response)?.code
     }
-
+    
     func getResponseMessage(_ response: String) -> String? {
-        return parseResponse(response)?.message
+        parseResponse(response)?.message
     }
-
+    
     func setCurrentResponse(code: Int, message: String) {
-           currentResponseCode = code
-           currentResponseMessage = message
-       }
+        currentResponseCode = code
+        currentResponseMessage = message
+    }
+    
+    // Init()
     
     init() {
-            self.network = NetworkModel()
-            self.network.delegate = self
-        }
-    
-    func connect(host: String, port: Int) {
-        network.controlChannelCreate(connectionInfo: ConnectionInformation(
-            isConnected: nil,
-            ipAddress: host,
-            port: port
-        ))
+        self.network = NetworkModel()
+        self.network.delegate = self
     }
-
 }

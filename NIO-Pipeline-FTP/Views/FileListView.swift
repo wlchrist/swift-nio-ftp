@@ -10,6 +10,9 @@ import SwiftUI
 struct FileListView: View {
     @Environment(FTPConnectionViewModel.self) private var viewModel
     @State private var currentPath = "/"
+    @State private var isDownloading = false
+    @State private var showDownloadStatus = false
+    @State private var downloadStatusMessage = ""
     
     var body: some View {
         List {
@@ -31,12 +34,21 @@ struct FileListView: View {
                                 .foregroundColor(.secondary)
                         }
                     }
+                    
+                    if item.type == .file {
+                        Spacer()
+                        if isDownloading {
+                            ProgressView()
+                        } else {
+                            Button(action: { handleFileSelection(item) }) {
+                                Image(systemName: "arrow.down.circle")
+                            }
+                        }
+                    }
                 }
                 .onTapGesture {
                     if item.type == .directory {
                         navigateToDirectory(item.name)
-                    } else {
-                        handleFileSelection(item)
                     }
                 }
             }
@@ -49,24 +61,43 @@ struct FileListView: View {
                 }
             }
         }
+        .alert("Download Status", isPresented: $showDownloadStatus) {
+            Button("OK") {}
+        } message: {
+            Text(downloadStatusMessage)
+        }
     }
     
     private func navigateUp() {
         currentPath = (currentPath as NSString).deletingLastPathComponent
-        viewModel.changeDirectory("..")  // Use wrapped method
+        viewModel.changeDirectory("..")
         viewModel.requestDirectoryListing()
     }
 
     private func navigateToDirectory(_ name: String) {
         currentPath = (currentPath as NSString).appendingPathComponent(name)
-        viewModel.changeDirectory(name)  // Use wrapped method
+        viewModel.changeDirectory(name)
         viewModel.requestDirectoryListing()
     }
     
     private func handleFileSelection(_ item: FTPListItem) {
-        print("Selected file: \(item.name)")
+        isDownloading = true
+        // Call your ViewModel's download method here
+        // viewModel.downloadFile(item.name)
+        
+        // Example status update (replace with actual download completion handling)
+        Task {
+            // Simulating download time
+            try? await Task.sleep(nanoseconds: 2 * 1_000_000_000)
+            await MainActor.run {
+                isDownloading = false
+                downloadStatusMessage = "Successfully downloaded \(item.name)"
+                showDownloadStatus = true
+            }
+        }
     }
 }
+
 #Preview {
     FileListView()
 }

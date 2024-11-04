@@ -28,3 +28,9 @@ struct LoginView: View {
 #Preview {
 
 }
+
+
+#Preview
+{
+    LoginView()
+}
