@@ -10,12 +10,12 @@ import Foundation
 
 @main
 struct NIO_Pipeline_FTPApp: App {
-    @State private var network = NetworkModel()
-    
+    @State private var connectionViewModel = FTPConnectionViewModel()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environment(network)
+                .environment(connectionViewModel)
         }
     }
 }
