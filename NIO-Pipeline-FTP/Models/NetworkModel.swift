@@ -35,7 +35,7 @@ struct FTPListItem: Identifiable {
     }
 }
 
-
+// TODO: refactor delegate
 protocol NetworkModelDelegate: AnyObject {
     func networkDidConnect()
     func networkDidDisconnect()
@@ -59,17 +59,14 @@ protocol NetworkModelDelegate: AnyObject {
     private var eventLoopGroup: MultiThreadedEventLoopGroup?
     private var commandQueue: [String] = []
     private var isProcessingCommand = false
-
-    
-    init(){}
-
     
     func controlChannelCreate(connectionInfo: ConnectionInformation) {
         eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
         
         guard let eventLoopGroup = eventLoopGroup else { return }
-        let responseHandler = LineBufferHandler()
         
+        // response handler initialization
+        let responseHandler = LineBufferHandler()
         responseHandler.networkModel = self
         
         

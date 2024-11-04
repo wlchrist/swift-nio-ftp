@@ -128,8 +128,9 @@ class FTPConnectionViewModel: NetworkModelDelegate {
             case .loggedIn:
                 sendFTPCommand("PASV\r\n")
                 networkDidLogin()
-            case .passiveMode, .dataTransferReady,
-                    .dataTransferInProgress, .dataTransferComplete:
+                
+                // TODO:
+            case .passiveMode, .dataTransferReady, .dataTransferInProgress, .dataTransferComplete:
                 break
             }
         }

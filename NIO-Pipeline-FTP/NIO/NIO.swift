@@ -44,7 +44,7 @@ class LineBufferHandler: ChannelInboundHandler {
             
             networkModel?.delegate?.setCurrentResponse(code: code, message: message)
             
-            // always list
+            // always list for these response codes
             if(code == 150 || code == 227) {
                 if passiveModePort(message) != nil {
                     networkModel?.dataChannelCreate(port: passiveModePort(message) ?? 22)

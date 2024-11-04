@@ -82,12 +82,9 @@ struct FileListView: View {
     
     private func handleFileSelection(_ item: FTPListItem) {
         isDownloading = true
-        // Call your ViewModel's download method here
-        // viewModel.downloadFile(item.name)
-        
-        // Example status update (replace with actual download completion handling)
+        // TODO: real async downloads
         Task {
-            // Simulating download time
+            // fake download time
             try? await Task.sleep(nanoseconds: 2 * 1_000_000_000)
             await MainActor.run {
                 isDownloading = false
