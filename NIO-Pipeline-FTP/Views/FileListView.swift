@@ -84,13 +84,10 @@ struct FileListView: View {
         isDownloading = true
         // TODO: real async downloads
         Task {
-            // fake download time
-            try? await Task.sleep(nanoseconds: 2 * 1_000_000_000)
-            await MainActor.run {
+            // fake download
                 isDownloading = false
                 downloadStatusMessage = "Successfully downloaded \(item.name)"
                 showDownloadStatus = true
-            }
         }
     }
 }

@@ -14,9 +14,10 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack {
-            if (ftpConnectionViewModel.isConnected == true) {
+            if (ftpConnectionViewModel.isConnected && ftpConnectionViewModel.isLoggedIn) {
                 FileListView()
-            } else {
+            } else
+            {
                 LoginView()
             }
         }

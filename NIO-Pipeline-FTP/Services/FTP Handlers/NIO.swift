@@ -8,9 +8,9 @@ class ChannelReadHandler: ChannelInboundHandler {
     typealias InboundOut = ByteBuffer
     
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-        var buffer = unwrapInboundIn(data)
+        var buff = unwrapInboundIn(data)
         
-        guard buffer.readString(length: buffer.readableBytes) != nil else {
+        guard buff.readString(length: buff.readableBytes) != nil else {
             print("Error reading from buffer")
             return
         }
@@ -81,8 +81,6 @@ class LineBufferHandler: ChannelInboundHandler {
         return port
     }
 }
-
-
 
 class DataChannelHandler: ChannelInboundHandler {
     typealias InboundIn = ByteBuffer
