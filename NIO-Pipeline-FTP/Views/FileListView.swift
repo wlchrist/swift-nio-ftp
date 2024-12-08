@@ -18,7 +18,7 @@ struct FileListView: View {
         List {
             if currentPath != "/" {
                 Button("..") {
-                    navigateUp()
+                    navigateUpDirectory()
                 }
             }
             
@@ -68,7 +68,7 @@ struct FileListView: View {
         }
     }
     
-    private func navigateUp() {
+    private func navigateUpDirectory() {
         currentPath = (currentPath as NSString).deletingLastPathComponent
         viewModel.changeDirectory("..")
         viewModel.requestDirectoryListing()
@@ -82,9 +82,8 @@ struct FileListView: View {
     
     private func handleFileSelection(_ item: FTPListItem) {
         isDownloading = true
-        // TODO: real async downloads
         Task {
-            // fake download
+            // Emulating a download
                 isDownloading = false
                 downloadStatusMessage = "Successfully downloaded \(item.name)"
                 showDownloadStatus = true

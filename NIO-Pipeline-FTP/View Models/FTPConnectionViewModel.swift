@@ -129,7 +129,6 @@ class FTPConnectionViewModel: NetworkModelDelegate {
                 sendFTPCommand("PASV\r\n")
                 networkDidLogin()
                 
-                // TODO:
             case .passiveMode, .dataTransferReady, .dataTransferInProgress, .dataTransferComplete:
                 break
             }
@@ -189,7 +188,7 @@ class FTPConnectionViewModel: NetworkModelDelegate {
             }
     }
     
-    private func parseResponse(_ response: String) -> (code: Int, message: String)? {
+    private func parseResponseCode(_ response: String) -> (code: Int, message: String)? {
         guard response.count >= 3,
               let code = Int(response.prefix(3)) else {
             return nil
@@ -233,11 +232,11 @@ class FTPConnectionViewModel: NetworkModelDelegate {
     }
     
     func getResponseCode(_ response: String) -> Int? {
-        parseResponse(response)?.code
+        parseResponseCode(response)?.code
     }
     
     func getResponseMessage(_ response: String) -> String? {
-        parseResponse(response)?.message
+        parseResponseCode(response)?.message
     }
     
     func setCurrentResponse(code: Int, message: String) {
