@@ -4,9 +4,9 @@
 //
 //  Created by Warren Christian on 11/3/24.
 //
-import NIO
 import Foundation
-
+import NIO
+import NIOSSL
 
 struct ConnectionInformation {
     var isConnected: Bool?
@@ -35,32 +35,17 @@ struct FTPListItem: Identifiable {
     }
 }
 
-// TODO: refactor delegate
-protocol NetworkModelDelegate: AnyObject {
-    func networkDidConnect()
-    func networkDidDisconnect()
-    func networkDidLogin()
-    func networkDidReceiveError(_ error: String)
-    func networkDidReceiveDirectoryListing(_ items: [String])
-    func networkDidReceiveData(_ data: String)
-    func networkDidConnectDataChannel()
-    func networkDidDisconnectDataChannel()
-    func getResponseCode(_ response: String) -> Int?
-    func getResponseMessage(_ response: String) -> String?
-    func setCurrentResponse(code: Int, message: String)
 
-}
 
 @Observable class NetworkModel {
     weak var delegate: NetworkModelDelegate?
-    
     private var controlChannel: Channel?
     private var dataChannel: Channel?
     private var eventLoopGroup: MultiThreadedEventLoopGroup?
     private var commandQueue: [String] = []
     private var isProcessingCommand = false
     
-    func controlChannelCreate(connectionInfo: ConnectionInformation) {
+    func createControlChannel(connectionInfo: ConnectionInformation) {
         eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
         
         guard let eventLoopGroup = eventLoopGroup else { return }
@@ -69,7 +54,7 @@ protocol NetworkModelDelegate: AnyObject {
         let responseHandler = LineBufferHandler()
         responseHandler.networkModel = self
         
-        
+        // FTP
         let bootstrap = ClientBootstrap(group: eventLoopGroup)
             .channelInitializer { channel in
                 channel.pipeline.addHandlers([
@@ -79,6 +64,7 @@ protocol NetworkModelDelegate: AnyObject {
                 ])
             }
         
+
         guard let host = connectionInfo.ipAddress else {
             print("Invalid IP address")
             return
@@ -89,7 +75,7 @@ protocol NetworkModelDelegate: AnyObject {
             return
         }
         
-        
+
         Task {
             do {
                 self.controlChannel = try await bootstrap.connect(host: host, port: port).get()
@@ -100,7 +86,7 @@ protocol NetworkModelDelegate: AnyObject {
         }
     }
     
-    func dataChannelCreate(port: Int) {
+    func createDataChannel(port: Int) {
             eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
             
             guard let eventLoopGroup = eventLoopGroup else {
@@ -135,6 +121,31 @@ protocol NetworkModelDelegate: AnyObject {
                 }
             }
         }
+    
+    
+    // Create new ftps bootstrap
+    func ftpsCreateControlChannel(connectionInfo: ConnectionInformation) {
+        
+        do {
+            let configuration = TLSConfiguration.makeClientConfiguration()
+            let sslContext = try NIOSSLContext(configuration: configuration)
+            let handler = try NIOSSLClientHandler(context: sslContext, serverHostname: connectionInfo.ipAddress)
+
+            let ftpsBootstrap = ClientBootstrap(group: eventLoopGroup!)
+                .channelInitializer{ channel in
+                    channel.pipeline.addHandlers([
+                            handler
+                    ])
+                }
+
+            
+        } catch {
+            print("Error during SSL configuration: \(error)")
+        }
+        
+        
+        
+    }
     
     
     func sendCommand(_ command: String) {
@@ -188,4 +199,7 @@ protocol NetworkModelDelegate: AnyObject {
         eventLoopGroup = nil
     }
 }
+
+
+
 

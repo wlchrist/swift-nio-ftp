@@ -12,7 +12,7 @@
 		2AA230752CCC1988004EE94E /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA230742CCC1988004EE94E /* NIOCore */; };
 		2AA230772CCC1988004EE94E /* NIOEmbedded in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA230762CCC1988004EE94E /* NIOEmbedded */; };
 		2AA230792CCC1988004EE94E /* NIOFoundationCompat in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA230782CCC1988004EE94E /* NIOFoundationCompat */; };
-		2AA2307B2CCC1988004EE94E /* NIOHTTP1 in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA2307A2CCC1988004EE94E /* NIOHTTP1 */; };
+		2AA2307B2CCC1988004EE94E /* NIOHTTP1 in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA2307A2CCC1988004EE94E /* NIOHTTP1 */; settings = {ATTRIBUTES = (Required, ); }; };
 		2AA2307D2CCC1988004EE94E /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA2307C2CCC1988004EE94E /* NIOPosix */; };
 		2AA2307F2CCC1988004EE94E /* NIOTLS in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA2307E2CCC1988004EE94E /* NIOTLS */; };
 		2AA230812CCC1988004EE94E /* NIOTestUtils in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA230802CCC1988004EE94E /* NIOTestUtils */; };
@@ -20,6 +20,8 @@
 		2AA230852CCC1988004EE94E /* _NIOConcurrency in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA230842CCC1988004EE94E /* _NIOConcurrency */; };
 		2AA230872CCC1988004EE94E /* _NIOFileSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA230862CCC1988004EE94E /* _NIOFileSystem */; };
 		2AA230892CCC1988004EE94E /* _NIOFileSystemFoundationCompat in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA230882CCC1988004EE94E /* _NIOFileSystemFoundationCompat */; };
+		2AA3466D2D09FD3800ACF011 /* NIOSSL in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA3466C2D09FD3800ACF011 /* NIOSSL */; settings = {ATTRIBUTES = (Required, ); }; };
+		2AA3466F2D09FD3800ACF011 /* NIOSSLHTTP1Client in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA3466E2D09FD3800ACF011 /* NIOSSLHTTP1Client */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,6 +41,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2AA3466F2D09FD3800ACF011 /* NIOSSLHTTP1Client in Frameworks */,
 				2AA230752CCC1988004EE94E /* NIOCore in Frameworks */,
 				2AA230892CCC1988004EE94E /* _NIOFileSystemFoundationCompat in Frameworks */,
 				2AA230792CCC1988004EE94E /* NIOFoundationCompat in Frameworks */,
@@ -49,6 +52,7 @@
 				2AA230712CCC1988004EE94E /* NIO in Frameworks */,
 				2AA230832CCC1988004EE94E /* NIOWebSocket in Frameworks */,
 				2AA2307B2CCC1988004EE94E /* NIOHTTP1 in Frameworks */,
+				2AA3466D2D09FD3800ACF011 /* NIOSSL in Frameworks */,
 				2AA230732CCC1988004EE94E /* NIOConcurrencyHelpers in Frameworks */,
 				2AA230772CCC1988004EE94E /* NIOEmbedded in Frameworks */,
 				2AA2307F2CCC1988004EE94E /* NIOTLS in Frameworks */,
@@ -107,6 +111,8 @@
 				2AA230842CCC1988004EE94E /* _NIOConcurrency */,
 				2AA230862CCC1988004EE94E /* _NIOFileSystem */,
 				2AA230882CCC1988004EE94E /* _NIOFileSystemFoundationCompat */,
+				2AA3466C2D09FD3800ACF011 /* NIOSSL */,
+				2AA3466E2D09FD3800ACF011 /* NIOSSLHTTP1Client */,
 			);
 			productName = "NIO-Pipeline-FTP";
 			productReference = 2AB2DB5B2CCC179000B290F7 /* NIO-Pipeline-FTP.app */;
@@ -138,6 +144,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				2AA2306F2CCC1988004EE94E /* XCRemoteSwiftPackageReference "swift-nio" */,
+				2AA3466B2D09FD3800ACF011 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2AB2DB5C2CCC179000B290F7 /* Products */;
@@ -381,6 +388,14 @@
 				minimumVersion = 2.76.1;
 			};
 		};
+		2AA3466B2D09FD3800ACF011 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio-ssl.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.29.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -448,6 +463,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2AA2306F2CCC1988004EE94E /* XCRemoteSwiftPackageReference "swift-nio" */;
 			productName = _NIOFileSystemFoundationCompat;
+		};
+		2AA3466C2D09FD3800ACF011 /* NIOSSL */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2AA3466B2D09FD3800ACF011 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */;
+			productName = NIOSSL;
+		};
+		2AA3466E2D09FD3800ACF011 /* NIOSSLHTTP1Client */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2AA3466B2D09FD3800ACF011 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */;
+			productName = NIOSSLHTTP1Client;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

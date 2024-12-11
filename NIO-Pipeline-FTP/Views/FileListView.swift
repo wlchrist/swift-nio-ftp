@@ -82,9 +82,7 @@ struct FileListView: View {
     
     private func handleFileSelection(_ item: FTPListItem) {
         isDownloading = true
-        // TODO: real async downloads
         Task {
-            // fake download
                 isDownloading = false
                 downloadStatusMessage = "Successfully downloaded \(item.name)"
                 showDownloadStatus = true

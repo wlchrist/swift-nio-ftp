@@ -1,8 +1,9 @@
 import Foundation
 import SwiftUI
 import NIO
+import NIOSSL
 
-
+// Cleartext handlers
 class ChannelReadHandler: ChannelInboundHandler {
     typealias InboundIn = ByteBuffer
     typealias InboundOut = ByteBuffer
@@ -47,7 +48,7 @@ class LineBufferHandler: ChannelInboundHandler {
             // always list for these response codes
             if(code == 150 || code == 227) {
                 if passiveModePort(message) != nil {
-                    networkModel?.dataChannelCreate(port: passiveModePort(message) ?? 22)
+                    networkModel?.createDataChannel(port: passiveModePort(message) ?? 22)
                     networkModel?.sendCommand("LIST\r\n")
                 }
             }
@@ -112,3 +113,4 @@ class ChannelSendHandler: ChannelOutboundHandler {
         context.write(wrapOutboundOut(buffer), promise: promise)
     }
 }
+

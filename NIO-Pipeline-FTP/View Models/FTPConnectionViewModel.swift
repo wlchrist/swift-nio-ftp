@@ -7,6 +7,24 @@
 import NIO
 import Foundation
 
+
+// NetworkModelDelegate
+
+protocol NetworkModelDelegate: AnyObject {
+    func networkDidConnect()
+    func networkDidDisconnect()
+    func networkDidLogin()
+    func networkDidReceiveError(_ error: String)
+    func networkDidReceiveDirectoryListing(_ items: [String])
+    func networkDidReceiveData(_ data: String)
+    func networkDidConnectDataChannel()
+    func networkDidDisconnectDataChannel()
+    func getResponseCode(_ response: String) -> Int?
+    func getResponseMessage(_ response: String) -> String?
+    func setCurrentResponse(code: Int, message: String)
+
+}
+
 @Observable
 class FTPConnectionViewModel: NetworkModelDelegate {
     
@@ -129,7 +147,6 @@ class FTPConnectionViewModel: NetworkModelDelegate {
                 sendFTPCommand("PASV\r\n")
                 networkDidLogin()
                 
-                // TODO:
             case .passiveMode, .dataTransferReady, .dataTransferInProgress, .dataTransferComplete:
                 break
             }
@@ -145,11 +162,20 @@ class FTPConnectionViewModel: NetworkModelDelegate {
     }
     
     func connect(host: String, port: Int) {
-        network.controlChannelCreate(connectionInfo: ConnectionInformation(
+        network.createControlChannel(connectionInfo: ConnectionInformation(
             isConnected: nil,
             ipAddress: host,
             port: port
         ))
+    }
+    
+    func ftpsConnect(host: String, port: Int) {
+        network.ftpsCreateControlChannel(connectionInfo: ConnectionInformation(
+            isConnected: nil,
+            ipAddress: host,
+            port: 990
+        ))
+        
     }
     
     func disconnect() {
@@ -198,7 +224,8 @@ class FTPConnectionViewModel: NetworkModelDelegate {
         return (code, message)
     }
     
-    // NetworkModelDelegate functions
+
+    
     
     func networkDidConnect() {
         connectionState.currentState = .connected(.idle)
@@ -245,10 +272,11 @@ class FTPConnectionViewModel: NetworkModelDelegate {
         currentResponseMessage = message
     }
     
-    // Init()
+    // Init delegate here
     
     init() {
         self.network = NetworkModel()
         self.network.delegate = self
     }
 }
+
