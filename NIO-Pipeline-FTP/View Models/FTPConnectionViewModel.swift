@@ -7,24 +7,6 @@
 import NIO
 import Foundation
 
-
-// NetworkModelDelegate
-
-protocol NetworkModelDelegate: AnyObject {
-    func networkDidConnect()
-    func networkDidDisconnect()
-    func networkDidLogin()
-    func networkDidReceiveError(_ error: String)
-    func networkDidReceiveDirectoryListing(_ items: [String])
-    func networkDidReceiveData(_ data: String)
-    func networkDidConnectDataChannel()
-    func networkDidDisconnectDataChannel()
-    func getResponseCode(_ response: String) -> Int?
-    func getResponseMessage(_ response: String) -> String?
-    func setCurrentResponse(code: Int, message: String)
-
-}
-
 @Observable
 class FTPConnectionViewModel: NetworkModelDelegate {
     
@@ -118,7 +100,8 @@ class FTPConnectionViewModel: NetworkModelDelegate {
     // State manager
     
     private func updateStateFromResponse(_ code: Int) {
-        let newState: CurrentState = switch code {
+        let newState: CurrentState =
+            switch code {
         case 220: .connected(.welcome)
         case 331: .connected(.waitingForPassword)
         case 230: .connected(.loggedIn)
@@ -126,7 +109,7 @@ class FTPConnectionViewModel: NetworkModelDelegate {
         case 150: .connected(.dataTransferReady)
         case 226: .connected(.dataTransferComplete)
         default: connectionState.currentState
-        }
+            }
         connectionState.currentState = newState
     }
     
@@ -153,7 +136,6 @@ class FTPConnectionViewModel: NetworkModelDelegate {
         }
     }
     
-    // Helper functions for UI
     
     func login(username: String, password: String) {
         credentials.username = username
@@ -173,7 +155,7 @@ class FTPConnectionViewModel: NetworkModelDelegate {
         network.ftpsCreateControlChannel(connectionInfo: ConnectionInformation(
             isConnected: nil,
             ipAddress: host,
-            port: 990
+            port: port
         ))
         
     }
@@ -223,9 +205,6 @@ class FTPConnectionViewModel: NetworkModelDelegate {
         let message = String(response.dropFirst(4))
         return (code, message)
     }
-    
-
-    
     
     func networkDidConnect() {
         connectionState.currentState = .connected(.idle)

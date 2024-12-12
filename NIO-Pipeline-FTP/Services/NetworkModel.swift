@@ -36,6 +36,20 @@ struct FTPListItem: Identifiable {
 }
 
 
+protocol NetworkModelDelegate: AnyObject {
+    func networkDidConnect()
+    func networkDidDisconnect()
+    func networkDidLogin()
+    func networkDidReceiveError(_ error: String)
+    func networkDidReceiveDirectoryListing(_ items: [String])
+    func networkDidReceiveData(_ data: String)
+    func networkDidConnectDataChannel()
+    func networkDidDisconnectDataChannel()
+    func getResponseCode(_ response: String) -> Int?
+    func getResponseMessage(_ response: String) -> String?
+    func setCurrentResponse(code: Int, message: String)
+}
+
 
 @Observable class NetworkModel {
     weak var delegate: NetworkModelDelegate?
@@ -54,7 +68,7 @@ struct FTPListItem: Identifiable {
         let responseHandler = LineBufferHandler()
         responseHandler.networkModel = self
         
-        // FTP
+        // FTP bootstrap
         let bootstrap = ClientBootstrap(group: eventLoopGroup)
             .channelInitializer { channel in
                 channel.pipeline.addHandlers([
@@ -64,7 +78,7 @@ struct FTPListItem: Identifiable {
                 ])
             }
         
-
+        
         guard let host = connectionInfo.ipAddress else {
             print("Invalid IP address")
             return
@@ -75,7 +89,7 @@ struct FTPListItem: Identifiable {
             return
         }
         
-
+        
         Task {
             do {
                 self.controlChannel = try await bootstrap.connect(host: host, port: port).get()
@@ -87,71 +101,88 @@ struct FTPListItem: Identifiable {
     }
     
     func createDataChannel(port: Int) {
-            eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
-            
-            guard let eventLoopGroup = eventLoopGroup else {
-                delegate?.networkDidReceiveError("Failed to create event loop group")
-                return
+        eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
+        
+        guard let eventLoopGroup = eventLoopGroup else {
+            delegate?.networkDidReceiveError("Failed to create event loop group")
+            return
+        }
+        
+        let dataHandler = DataChannelHandler()
+        dataHandler.networkModel = self
+        
+        let bootstrap = ClientBootstrap(group: eventLoopGroup)
+            .channelInitializer { channel in
+                channel.pipeline.addHandlers([
+                    dataHandler
+                ])
             }
-            
-            let dataHandler = DataChannelHandler()
-            dataHandler.networkModel = self
-            
-            let bootstrap = ClientBootstrap(group: eventLoopGroup)
-                .channelInitializer { channel in
-                    channel.pipeline.addHandlers([
-                        dataHandler
-                    ])
-                }
-            
+        
         
         guard let host = controlChannel?.remoteAddress?.ipAddress else {
             print("Could not determine remote address for data channel")
             return
         }
-            
-            Task {
-                do {
-                    self.dataChannel = try await bootstrap.connect(host: host, port: port).get()
-                    print("Connected to \(host) on port \(port)")
-                    delegate?.networkDidConnectDataChannel()
-                } catch {
-                    print("Failed to connect: \(error)")
-                    delegate?.networkDidReceiveError("Data channel connection failed: \(error.localizedDescription)")
-                }
+        
+        Task {
+            do {
+                self.dataChannel = try await bootstrap.connect(host: host, port: port).get()
+                print("Connected to \(host) on port \(port)")
+                delegate?.networkDidConnectDataChannel()
+            } catch {
+                print("Failed to connect: \(error)")
+                delegate?.networkDidReceiveError("Data channel connection failed: \(error.localizedDescription)")
             }
         }
+    }
     
     
-    // Create new ftps bootstrap
+    // FTPS bootstrap
     func ftpsCreateControlChannel(connectionInfo: ConnectionInformation) {
+        eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
+        
+        guard let eventLoopGroup = eventLoopGroup else { return }
+        
+        let responseHandler = LineBufferHandler()
+        responseHandler.networkModel = self
         
         do {
             let configuration = TLSConfiguration.makeClientConfiguration()
             let sslContext = try NIOSSLContext(configuration: configuration)
             let handler = try NIOSSLClientHandler(context: sslContext, serverHostname: connectionInfo.ipAddress)
-
-            let ftpsBootstrap = ClientBootstrap(group: eventLoopGroup!)
-                .channelInitializer{ channel in
+            
+            let ftpsBootstrap = ClientBootstrap(group: eventLoopGroup)
+                .channelInitializer { channel in
                     channel.pipeline.addHandlers([
-                            handler
+                        handler
                     ])
                 }
-
+            
+            guard let host = connectionInfo.ipAddress else {
+                print("Invalid IP address")
+                return
+            }
+            
+            guard let port = connectionInfo.port else {
+                print("Invalid port number")
+                return
+            }
+            
+            Task {
+                self.controlChannel = try await ftpsBootstrap.connect(host: host, port: port).get()
+            }
             
         } catch {
-            print("Error during SSL configuration: \(error)")
+            print("Error during FTPS configuration: \(error)")
         }
-        
-        
         
     }
     
     
     func sendCommand(_ command: String) {
-       commandQueue.append(command)
-       processNextCommand()
-   }
+        commandQueue.append(command)
+        processNextCommand()
+    }
     
     private func processNextCommand() {
         guard !isProcessingCommand,
@@ -188,7 +219,7 @@ struct FTPListItem: Identifiable {
         channel.writeAndFlush(buffer, promise: promise)
     }
     
-
+    
     
     func disconnect() {
         controlChannel?.close(promise: nil)
