@@ -18,8 +18,9 @@ struct LoginView: View {
             Button("Connect") {
                 //ftpConnectionViewModel.connect(host: "127.0.0.1", port: 21)
                 //ftpConnectionViewModel.login(username: "demo", password: "password")
-                ftpConnectionViewModel.ftpsConnect(host: "test.rebex.net", port: 21)
-                //ftpConnectionViewModel.login(username: "demo", password: "password")
+                //ftpConnectionViewModel.ftpsConnect(host: "test.rebex.net", port: 21)
+                ftpConnectionViewModel.ftpsConnect(host: "ftp.dlptest.com", port: 21)
+                ftpConnectionViewModel.login(username: "dlpuser", password: "rNrKYTX9g7z3RgJRmxWuGHbeu")
             }
         }
         .padding()

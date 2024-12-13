@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import NIO
 import NIOSSL
+import NIOCore
 
 // Cleartext handlers
 class ChannelReadHandler: ChannelInboundHandler {
@@ -34,6 +35,7 @@ class LineBufferHandler: ChannelInboundHandler {
         guard let received = buff.readString(length: buff.readableBytes) else {
             return
         }
+
         
         buffer += received
         
@@ -52,6 +54,7 @@ class LineBufferHandler: ChannelInboundHandler {
                     networkModel?.sendCommand("LIST\r\n")
                 }
             }
+            
             
             if !cleanLine.isEmpty {
                 var outBuff = context.channel.allocator.buffer(capacity: cleanLine.utf8.count)

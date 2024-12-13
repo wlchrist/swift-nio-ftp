@@ -7,6 +7,8 @@
 import Foundation
 import NIO
 import NIOSSL
+import NIOCore
+
 
 struct ConnectionInformation {
     var isConnected: Bool?
@@ -137,49 +139,75 @@ protocol NetworkModelDelegate: AnyObject {
     }
     
     
-    // FTPS bootstrap
+        // FTPS bootstrap
     func ftpsCreateControlChannel(connectionInfo: ConnectionInformation) {
         eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
         
         guard let eventLoopGroup = eventLoopGroup else { return }
         
+        // handler initialization
         let responseHandler = LineBufferHandler()
         responseHandler.networkModel = self
-        
+        let configuration = TLSConfiguration.makeClientConfiguration()
+        var sslContext: NIOSSLContext? = nil
         do {
-            let configuration = TLSConfiguration.makeClientConfiguration()
-            let sslContext = try NIOSSLContext(configuration: configuration)
-            let handler = try NIOSSLClientHandler(context: sslContext, serverHostname: connectionInfo.ipAddress)
-            
-            let ftpsBootstrap = ClientBootstrap(group: eventLoopGroup)
-                .channelInitializer { channel in
-                    channel.pipeline.addHandlers([
-                        ChannelReadHandler(),
-                        handler,
+            sslContext = try NIOSSLContext(configuration: configuration)
+        } catch NIOSSLError.failedToLoadCertificate {
+            print("Failed to load certificate")
+            return
+        } catch NIOSSLError.handshakeFailed {
+            print("Handshake failed")
+            return
+        } catch {
+            print("Unkown error: \(error)")
+            return
+        }
+        guard let sslContext = sslContext else { return }
+        
+    
+        
+        // FTPS bootstrap
+        let bootstrap = ClientBootstrap(group: eventLoopGroup)
+            .channelInitializer { channel in
+                do {
+                    let sslHandler = try NIOSSLClientHandler(context: sslContext, serverHostname: connectionInfo.ipAddress)
+                    
+                    let handlers = channel.pipeline.addHandlers([
                         responseHandler,
+                        ChannelReadHandler(),
                         ChannelSendHandler()
                     ])
+                    print("Handlers initialized")
+                    return handlers
+                } catch {
+                    print("Failed to initialize channel: \(error)")
+                    return channel.eventLoop.makeFailedFuture(error)
+                    
                 }
-            
-            guard let host = connectionInfo.ipAddress else {
-                print("Invalid IP address")
-                return
             }
-            
-            guard let port = connectionInfo.port else {
-                print("Invalid port number")
-                return
-            }
-            
-            Task {
-                self.controlChannel = try await ftpsBootstrap.connect(host: host, port: port).get()
-            }
-            
-        } catch {
-            print("Error during FTPS configuration: \(error)")
+        
+        
+        guard let host = connectionInfo.ipAddress else {
+            print("Invalid IP address")
+            return
         }
         
+        guard let port = connectionInfo.port else {
+            print("Invalid port number")
+            return
+        }
+        
+        
+        Task {
+            do {
+                self.controlChannel = try await bootstrap.connect(host: host, port: port).get()
+                print("Connected to \(host) on port \(port)")
+            } catch {
+                print("Failed to connect: \(error)")
+            }
+        }
     }
+    
     
     
     func sendCommand(_ command: String) {
