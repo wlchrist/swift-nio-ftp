@@ -17,9 +17,8 @@ struct LoginView: View {
                 .foregroundStyle(.tint)
             Button("Connect") {
                 //ftpConnectionViewModel.connect(host: "127.0.0.1", port: 21)
-                //ftpConnectionViewModel.login(username: "test", password: "test")
-                ftpConnectionViewModel.ftpsConnect(host: "test.rebex.net", port: 990)
-                
+                //ftpConnectionViewModel.login(username: "demo", password: "password")
+                ftpConnectionViewModel.ftpsConnect(host: "test.rebex.net", port: 21)
                 //ftpConnectionViewModel.login(username: "demo", password: "password")
             }
         }

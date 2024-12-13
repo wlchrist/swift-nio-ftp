@@ -21,7 +21,6 @@
 		2AA230872CCC1988004EE94E /* _NIOFileSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA230862CCC1988004EE94E /* _NIOFileSystem */; };
 		2AA230892CCC1988004EE94E /* _NIOFileSystemFoundationCompat in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA230882CCC1988004EE94E /* _NIOFileSystemFoundationCompat */; };
 		2AA3466D2D09FD3800ACF011 /* NIOSSL in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA3466C2D09FD3800ACF011 /* NIOSSL */; settings = {ATTRIBUTES = (Required, ); }; };
-		2AA3466F2D09FD3800ACF011 /* NIOSSLHTTP1Client in Frameworks */ = {isa = PBXBuildFile; productRef = 2AA3466E2D09FD3800ACF011 /* NIOSSLHTTP1Client */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,7 +40,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2AA3466F2D09FD3800ACF011 /* NIOSSLHTTP1Client in Frameworks */,
 				2AA230752CCC1988004EE94E /* NIOCore in Frameworks */,
 				2AA230892CCC1988004EE94E /* _NIOFileSystemFoundationCompat in Frameworks */,
 				2AA230792CCC1988004EE94E /* NIOFoundationCompat in Frameworks */,

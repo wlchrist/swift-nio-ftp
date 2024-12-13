@@ -251,7 +251,7 @@ class FTPConnectionViewModel: NetworkModelDelegate {
         currentResponseMessage = message
     }
     
-    // Init delegate here
+    // Init delegate/network model here
     
     init() {
         self.network = NetworkModel()

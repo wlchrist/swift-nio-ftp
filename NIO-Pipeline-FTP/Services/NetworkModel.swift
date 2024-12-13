@@ -154,7 +154,10 @@ protocol NetworkModelDelegate: AnyObject {
             let ftpsBootstrap = ClientBootstrap(group: eventLoopGroup)
                 .channelInitializer { channel in
                     channel.pipeline.addHandlers([
-                        handler
+                        ChannelReadHandler(),
+                        handler,
+                        responseHandler,
+                        ChannelSendHandler()
                     ])
                 }
             
